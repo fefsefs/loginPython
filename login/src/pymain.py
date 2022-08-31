@@ -14,7 +14,7 @@ DBPASSWORD = os.getenv('DBPASSWORD')
 try:
     db = mysql.connector.connect(
         host = 'localhost',
-        user = 'root',
+        user = DBUSER,
         passwd = DBPASSWORD,
         database = 'users'
     )
