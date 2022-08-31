@@ -1,15 +1,21 @@
+import os
 from asyncio.windows_events import NULL
 import tkinter
 from tkinter import messagebox
 from typing import Literal
 import mysql.connector
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+DBUSER = os.getenv('DBUSER')
+DBPASSWORD = os.getenv('DBPASSWORD')
 
 try:
     db = mysql.connector.connect(
         host = 'localhost',
         user = 'root',
-        passwd = 'Forager04',
+        passwd = DBPASSWORD,
         database = 'users'
     )
     sqlcursor = db.cursor()
