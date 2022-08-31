@@ -3,7 +3,7 @@ from asyncio.windows_events import NULL
 import tkinter
 from tkinter import messagebox
 from typing import Literal
-import mysql.connector
+import sqlite3
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -12,22 +12,11 @@ DBUSER = os.getenv('DBUSER')
 DBPASSWORD = os.getenv('DBPASSWORD')
 
 try:
-    db = mysql.connector.connect(
-        host = 'localhost',
-        user = DBUSER,
-        passwd = DBPASSWORD,
-        database = 'users'
-    )
+    db = sqlite3.connect('database/mydatabase')
     sqlcursor = db.cursor()
-    #YA CREADO sqlcursor.execute('CREATE database users')
-    #YA CREADO sqlcursor.execute('CREATE TABLE mainTable (id int PRIMARY KEY NOT NULL AUTO_INCREMENT, nombre varchar(255), edad int, contrasenia varchar(255), email varchar(255), fecha datetime)')
-    #YA CREADO db.commit()
-    #YA CREADO sqlcursor.execute('INSERT INTO mainTable (nombre, edad, contrasenia, email, fecha) VALUES (%s, %s, %s, %s, %s)', ('Felipe', 17, "contr4", "email@gmail", datetime.now()))
-    sqlcursor.execute('SELECT * FROM mainTable') 
     
-    for x in sqlcursor:
-        print(sqlcursor)
     
+
     if db.is_connected():
         print('conexion a database exitosa')
         info_db = db.get_server_info()
