@@ -5,20 +5,20 @@ from tkinter import messagebox
 from typing import Literal
 import sqlite3
 from datetime import datetime
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
-load_dotenv()
-DBUSER = os.getenv('DBUSER')
-DBPASSWORD = os.getenv('DBPASSWORD')
+#load_dotenv()
+#DBUSER = os.getenv('DBUSER')
+#DBPASSWORD = os.getenv('DBPASSWORD')
 
 try:
     db = sqlite3.connect('database/mydatabase')
     sqlcursor = db.cursor()
     
-    
 
     if db.is_connected():
         print('conexion a database exitosa')
+        print(sqlite3.version)
         info_db = db.get_server_info()
         print(info_db)
     
@@ -169,6 +169,7 @@ ventana.mainloop()
 """
 IDEAS:
     DES/ENCRIPTAR (ESC Y CASA)
-    TERMINAR INSERCION A DATABASE SQL FALTA PODER LEER LO INSERTADO (CASA Y PROBAR INSTALAR EN ESC)
+    TERMINAR INSERCION A DATABASE SQL FALTA PODER LEER LO INSERTADO (CASA Y ESC)
     TERMINAR EMAIL Y CONTRASENIA CHECK (CASA Y ESC)
+    PODER ENVIAR EMAILS DE CHECKEO
 """
