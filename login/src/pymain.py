@@ -12,18 +12,16 @@ from datetime import datetime
 #DBPASSWORD = os.getenv('DBPASSWORD')
 
 try:
-    db = sqlite3.connect('database/mydatabase')
+    db = sqlite3.connect('database\mydatabase3')
     sqlcursor = db.cursor()
+    print('conexion a database exitosa')
+    print('version de SQLite: ' + sqlite3.version)
     
-
-    if db.is_connected():
-        print('conexion a database exitosa')
-        print(sqlite3.version)
-        info_db = db.get_server_info()
-        print(info_db)
+    db.commit()
+    db.close()
     
 except Exception as ex:
-    print(ex)
+   print(ex)
 
 aNum = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 aABC = ('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', 'Z', 'X', 'C', 'V', 'B', 'N', 'M')
@@ -54,7 +52,7 @@ class datosMiembro:
         self.datos['contrasenia'] = iContrasenia
         self.datos['email'] = iEmail
 
-    def invalidPasswordCheck(self, boolFlag):
+    def invalidPasswordCheck(self, boolFlag) -> 'True/False':
         checkPCont = 0
         for x in self.datos['contrasenia']:
             if len(self.datos['contrasenia']) < 11:
@@ -68,7 +66,7 @@ class datosMiembro:
             return True
         return False
 
-    def invalidEmailCheck(self):
+    def invalidEmailCheck(self) -> 'True/False':
         checkECont = 0
         for y in self.datos['email']:
             if y not in aABC and y not in aAbc and y not in aChar and y not in aNum: checkECont += 1 
@@ -78,7 +76,7 @@ class datosMiembro:
             return True
         return False
 
-def invalidPasswordCheck(rawStringPassword, boolFlag):
+def invalidPasswordCheck(rawStringPassword, boolFlag) -> 'True/False':
         checkPCont = 0
         for x in rawStringPassword:
             if len(rawStringPassword) < 11:
@@ -92,7 +90,7 @@ def invalidPasswordCheck(rawStringPassword, boolFlag):
             return True
         return False
 
-def invalidEmailCheck(rawStringEmail):
+def invalidEmailCheck(rawStringEmail) -> 'True/False':
         checkECont = 0
         if rawStringEmail.__contains__('@') == False: 
             checkECont += 1
@@ -103,7 +101,7 @@ def invalidEmailCheck(rawStringEmail):
             return True
         return False
 
-def button1Command (nuevoID, cuentas, boolFlagInput):
+def button1Command (nuevoID, cuentas, boolFlagInput) -> 'nuevoID':
     nuevoID = getInputs(nuevoID, boolFlagInput, campo = 'ID')
     cuentas[nuevoID.datos['email']] = nuevoID
     print('Edad del nuevo ID: ' + nuevoID.datos['edad'])
