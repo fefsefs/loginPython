@@ -2,7 +2,7 @@ import os
 from asyncio.windows_events import NULL
 import tkinter
 from tkinter import messagebox
-from typing import Literal
+from typing import *
 import sqlite3
 from datetime import datetime
 #from dotenv import load_dotenv
@@ -10,6 +10,7 @@ from datetime import datetime
 #load_dotenv()
 #DBUSER = os.getenv('DBUSER')
 #DBPASSWORD = os.getenv('DBPASSWORD')
+
 
 try:
     db = sqlite3.connect('database\mydatabase3')
@@ -26,10 +27,9 @@ except Exception as ex:
 aNum = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 aABC = ('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', 'Z', 'X', 'C', 'V', 'B', 'N', 'M')
 aAbc = ('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ñ', 'z', 'x', 'c', 'v', 'b', 'n', 'm')
-aChar = ('~', '@', '_', '/', '+')
+aChar = ('~', '@', '_', '/', '+', '.')
 
-cuentas = {}
-print (cuentas)
+
 boolFlag = False
 boolFlagInput = False
 nuevoID = 0
@@ -80,7 +80,6 @@ def invalidPasswordCheck(rawStringPassword, boolFlag) -> 'True/False':
         checkPCont = 0
         for x in rawStringPassword:
             if len(rawStringPassword) < 11:
-                #print("cantidad de caracteres debe ser superior a 11"); 
                 boolFlag = True
                 break
             if x not in aABC and x not in aAbc and x not in aChar and x not in aNum: checkPCont += 1 
@@ -92,7 +91,7 @@ def invalidPasswordCheck(rawStringPassword, boolFlag) -> 'True/False':
 
 def invalidEmailCheck(rawStringEmail) -> 'True/False':
         checkECont = 0
-        if rawStringEmail.__contains__('@') == False: 
+        if (rawStringEmail.__contains__('@gmail.com') or rawStringEmail.__contains__('@etrr.edu.ar') or rawStringEmail.__contains__('@yahoo.com'))== False: 
             checkECont += 1
         for y in rawStringEmail:
             if y not in aABC and y not in aAbc and y not in aChar and y not in aNum: checkECont += 1 
@@ -101,14 +100,12 @@ def invalidEmailCheck(rawStringEmail) -> 'True/False':
             return True
         return False
 
-def button1Command (nuevoID, cuentas, boolFlagInput) -> 'nuevoID':
+def button1Command (nuevoID, boolFlagInput) -> 'nuevoID':
     nuevoID = getInputs(nuevoID, boolFlagInput, campo = 'ID')
-    cuentas[nuevoID.datos['email']] = nuevoID
     print('Edad del nuevo ID: ' + nuevoID.datos['edad'])
     print('DNI del nuevo ID: ' + nuevoID.datos['DNI'])
     print('Contrasenia del nuevo ID: ' + nuevoID.datos['contrasenia'])
     print('Email del nuevo ID: ' + nuevoID.datos['email'])
-    print(len(nuevoID.datos['contrasenia']))
     return nuevoID
 
 def getInputs (nuevoID, boolFlagInput, campo : Literal['edad', 'dni', 'contrasenia', 'email', 'ID']):
@@ -119,13 +116,15 @@ def getInputs (nuevoID, boolFlagInput, campo : Literal['edad', 'dni', 'contrasen
     if campo == 'contrasenia':
         if invalidPasswordCheck(inputContrasenia.get(), boolFlag) == True :
             inputContrasenia.delete(0,'end')
-            messagebox.showerror('Error' , 'necesita + de 11 caracteres, sin caracteres diferentes a: ~ @ _ / +')
+            messagebox.showerror('Error' , 'Contrasenia necesita + de 11 caracteres, sin caracteres diferentes a: ~ @ _ / +')
         else:
             return inputContrasenia.get()
     if campo == 'email':
         if invalidEmailCheck(inputEmail.get()) == True :
             inputEmail.delete(0,'end')
             messagebox.showerror('Error', 'Email ingresado invalido')
+        else:
+            return inputEmail.get()
     if campo == 'ID':
         nuevoID = datosMiembro(
             iEdad = getInputs(nuevoID, boolFlagInput, campo = 'edad'),
@@ -158,7 +157,7 @@ inputEmailTitulo.grid(row = 7, column = 1)
 inputEmail = tkinter.Entry(ventana, font = 'Sylfaen 14')
 inputEmail.grid(row = 8, column = 1)
 
-sendInput = tkinter.Button (ventana, text = 'enviar', width = 6, height = 2, command = lambda : button1Command(nuevoID, cuentas, boolFlagInput))
+sendInput = tkinter.Button (ventana, text = 'enviar', width = 6, height = 2, command = lambda : button1Command(nuevoID, boolFlagInput))
 sendInput.grid(row = 9, column = 1)
 
 
@@ -166,8 +165,8 @@ ventana.mainloop()
 
 """
 IDEAS:
-    DES/ENCRIPTAR (ESC Y CASA)
+    DES/ENCRIPTAR (ESC Y CASA) 
     TERMINAR INSERCION A DATABASE SQL FALTA PODER LEER LO INSERTADO (CASA Y ESC)
-    TERMINAR EMAIL Y CONTRASENIA CHECK (CASA Y ESC)
+    X TERMINAR EMAIL Y CONTRASENIA CHECK (CASA Y ESC) LISTOOO
     PODER ENVIAR EMAILS DE CHECKEO(INVESTIGAR)
 """
