@@ -15,7 +15,7 @@ from datetime import datetime
 print(datetime.now())
 
 try:
-    db = sqlite3.connect("mydatabase3")
+    db = sqlite3.connect("mydatabase3.db")
     sqlcursor = db.cursor()
     print("conexion a database exitosa")
     print("version de SQLite: " + sqlite3.version)
