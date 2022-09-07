@@ -26,21 +26,12 @@ try:
             (ID int IDENTITY(1,1) PRIMARY KEY, nombre varchar(255), edad int, contrasenia varchar(255), email varchar(255) NOT NULL, fechaDeCreacion DATETIME)
     """
     )
-
-    sqlcursor.execute(
-        f"""
-        INSERT INTO usuarios (nombre, edad, contrasenia, email, fechaDeCreacion)
-        VALUES ('felipe', 30, 'oiaewj', 'dadaw', '{datetime.now()}')
-    """
-    )
-
     db.commit()
-    db.close()
 
 except Exception as ex:
     print(ex)
 # fmt: off
-aNum = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+aNum = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 aABC = ('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', 'Z', 'X', 'C', 'V', 'B', 'N', 'M')
 aAbc = ('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ñ', 'z', 'x', 'c', 'v', 'b', 'n', 'm')
 aChar = ('~', '@', '_', '/', '+', '.')
@@ -64,9 +55,20 @@ class datosMiembro:
         self.datos["contrasenia"] = iContrasenia
         self.datos["email"] = iEmail
 
+    def insertDigestedIntoSQLDB(self):
+        sqlcursor.execute(
+            f"""
+            INSERT INTO usuarios (nombre, edad, contrasenia, email, fechaDeCreacion)
+            VALUES ('columnaDeMas', {hash(self.datos['edad'])}, {hash(self.datos['contrasenia'])}, {hash(self.datos['email'])}, '{datetime.now()}')
+        """
+        )
+        db.commit()
+        print("datos insertados en la DB")
+        return 0
+
 
 # A function to check if a string has invalid passwords.
-def invalidPasswordCheck(rawStringPassword, boolFlag) -> "True/False":
+def invalidPassword(rawStringPassword, boolFlag) -> "True/False":
     checkPCont = 0
     for x in rawStringPassword:
         if len(rawStringPassword) < 11:
@@ -80,10 +82,11 @@ def invalidPasswordCheck(rawStringPassword, boolFlag) -> "True/False":
             f"se ha insertado un caracter invalido o la cantidad de caracteres son menores a 11 {rawStringPassword}"
         )
         return True
+    print("cotrasenia correcta")
     return False
 
 
-def invalidEmailCheck(rawStringEmail) -> "True/False":
+def invalidEmail(rawStringEmail) -> "True/False":
     checkECont = 0
     if (
         rawStringEmail.__contains__("@gmail.com")
@@ -100,28 +103,14 @@ def invalidEmailCheck(rawStringEmail) -> "True/False":
     return False
 
 
-# def encriptionFunc(stringForEncryption):
-#     key = Fernet.generate_key()
-#     encryptKey = Fernet(key)
-#     encryptedString = encryptKey.encrypt(bytes(stringForEncryption))
-#     print(encryptedString)
-#     return encryptedString, encryptKey
-
-
-# def deencriptionFunc(stringForDecryption, decryptKey):
-#     decryptKey.decrypt(stringForDecryption)
-
-
 def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
     nuevoID = getInputs(nuevoID, boolFlagInput, campo="ID")
     print("Edad del nuevo ID: " + nuevoID.datos["edad"])
     print("DNI del nuevo ID: " + nuevoID.datos["DNI"])
     print("Contrasenia del nuevo ID: " + nuevoID.datos["contrasenia"])
     print("Email del nuevo ID: " + nuevoID.datos["email"])
-    # encString, encKey = encriptionFunc(nuevoID.datos["contrasenia"])
-    # print(nuevoID.datos["contrasenia"])
-    # deencriptionFunc(encKey, encKey)
-    print(nuevoID.datos["contrasenia"])
+
+    nuevoID.insertDigestedIntoSQLDB()
     return nuevoID
 
 
@@ -133,7 +122,7 @@ def getInputs(
     if campo == "dni":
         return inputDNI.get()
     if campo == "contrasenia":
-        if invalidPasswordCheck(inputContrasenia.get(), boolFlag) == True:
+        if invalidPassword(inputContrasenia.get(), boolFlag) == True:
             inputContrasenia.delete(0, "end")
             messagebox.showerror(
                 "Error",
@@ -142,7 +131,7 @@ def getInputs(
         else:
             return inputContrasenia.get()
     if campo == "email":
-        if invalidEmailCheck(inputEmail.get()) == True:
+        if invalidEmail(inputEmail.get()) == True:
             inputEmail.delete(0, "end")
             messagebox.showerror("Error", "Email ingresado invalido")
         else:
@@ -196,8 +185,8 @@ ventana.mainloop()
 
 """
 IDEAS:
-    DES/ENCRIPTAR (ESC Y CASA) 
-    TERMINAR INSERCION A DATABASE SQL FALTA PODER LEER LO INSERTADO (CASA Y ESC)
+    X DES/ENCRIPTAR (ESC Y CASA) LISTOO
+    PODER LEER LO INSERTADO (CASA Y ESC)
     X TERMINAR EMAIL Y CONTRASENIA CHECK (CASA Y ESC) LISTOOO
     PODER ENVIAR EMAILS DE CHECKEO(INVESTIGAR)
 """
