@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 import math
 import os
 import tkinter
@@ -13,27 +12,33 @@ from datetime import datetime
 # DBUSER = os.getenv('DBUSER')
 # DBPASSWORD = os.getenv('DBPASSWORD')
 
-# try:
-db = sqlite3.connect("mydatabase3")
-sqlcursor = db.cursor()
-print("conexion a database exitosa")
-print("version de SQLite: " + sqlite3.version)
+print(datetime.now())
 
-sqlcursor.execute(
-    """CREATE TABLE IF NOT EXISTS usuarios 
-    (id integer auto_increment primary key, nombre varchar(255), edad int, contrasenia varchar(255), email varchar(255), fechaDeCreacion timestamp)"""
-)
-dateToday = datetime.now()
-sqlcursor.execute(
-    f"""INSERT INTO 'usuarios' VALUES
-        (?, 'peres', '33', 'holaC', 'hola', ?)""",
-    (NULL, dateToday),
-)
-db.commit()
-db.close()
+try:
+    db = sqlite3.connect("mydatabase3")
+    sqlcursor = db.cursor()
+    print("conexion a database exitosa")
+    print("version de SQLite: " + sqlite3.version)
 
-# except Exception as ex:
-#     print(ex)
+    sqlcursor.execute(
+        """ 
+        CREATE TABLE IF NOT EXISTS usuarios 
+            (ID int IDENTITY(1,1) PRIMARY KEY, nombre varchar(255), edad int, contrasenia varchar(255), email varchar(255) NOT NULL, fechaDeCreacion DATETIME)
+    """
+    )
+
+    sqlcursor.execute(
+        f"""
+        INSERT INTO usuarios (nombre, edad, contrasenia, email, fechaDeCreacion)
+        VALUES ('felipe', 30, 'oiaewj', 'dadaw', '{datetime.now()}')
+    """
+    )
+
+    db.commit()
+    db.close()
+
+except Exception as ex:
+    print(ex)
 # fmt: off
 aNum = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 aABC = ('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', 'Z', 'X', 'C', 'V', 'B', 'N', 'M')
@@ -59,19 +64,8 @@ class datosMiembro:
         self.datos["contrasenia"] = iContrasenia
         self.datos["email"] = iEmail
 
-    def SLQinsertionWithHashing(self, datos):
-        digestedEdad = hash(datos["edad"])
-        digestedDNI = hash(datos["DNI"])
-        digestedContrasenia = hash(datos["contrasenia"])
-        digestedEmail = hash(datos["email"])
 
-        sqlcursor.execute(
-            f"""INSERT INTO usuarios VALUES
-            ({datos['edad']}, {datos['DNI']}, {datos['contrasenia']}, {datos['email']}, datetime('now'))"""
-        )
-        db.commit()
-
-
+# A function to check if a string has invalid passwords.
 def invalidPasswordCheck(rawStringPassword, boolFlag) -> "True/False":
     checkPCont = 0
     for x in rawStringPassword:
@@ -112,10 +106,10 @@ def invalidEmailCheck(rawStringEmail) -> "True/False":
 #     encryptedString = encryptKey.encrypt(bytes(stringForEncryption))
 #     print(encryptedString)
 #     return encryptedString, encryptKey
+
+
 # def deencriptionFunc(stringForDecryption, decryptKey):
 #     decryptKey.decrypt(stringForDecryption)
-# def hashingFunc(stringForHashing: str) -> "hash":
-#     return hash(stringForHashing)
 
 
 def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
@@ -127,7 +121,7 @@ def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
     # encString, encKey = encriptionFunc(nuevoID.datos["contrasenia"])
     # print(nuevoID.datos["contrasenia"])
     # deencriptionFunc(encKey, encKey)
-    # print(nuevoID.datos["contrasenia"])
+    print(nuevoID.datos["contrasenia"])
     return nuevoID
 
 
