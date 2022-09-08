@@ -12,8 +12,6 @@ from datetime import datetime
 # DBUSER = os.getenv('DBUSER')
 # DBPASSWORD = os.getenv('DBPASSWORD')
 
-print(datetime.now())
-
 try:
     db = sqlite3.connect("mydatabase3.db")
     sqlcursor = db.cursor()
@@ -23,7 +21,7 @@ try:
     sqlcursor.execute(
         """ 
         CREATE TABLE IF NOT EXISTS usuarios 
-            (ID int IDENTITY(1,1) PRIMARY KEY, nombre varchar(255), edad int, contrasenia varchar(255), email varchar(255) NOT NULL, fechaDeCreacion DATETIME)
+            (ID INTEGER PRIMARY KEY AUTOINCREMENT, edad int, dni int, contrasenia varchar(255), email varchar(255) NOT NULL, fechaDeCreacion DATETIME)
     """
     )
     db.commit()
@@ -58,13 +56,34 @@ class datosMiembro:
     def insertDigestedIntoSQLDB(self):
         sqlcursor.execute(
             f"""
-            INSERT INTO usuarios (nombre, edad, contrasenia, email, fechaDeCreacion)
-            VALUES ('columnaDeMas', {hash(self.datos['edad'])}, {hash(self.datos['contrasenia'])}, {hash(self.datos['email'])}, '{datetime.now()}')
+            INSERT INTO usuarios (edad, dni, contrasenia, email, fechaDeCreacion)
+        VALUES ({hash(self.datos['edad'])}, {hash(self.datos['DNI'])}, {hash(self.datos['contrasenia'])}, {hash(self.datos['email'])}, '{datetime.now()}')
         """
         )
+        # for row in sqlcursor.execute("""SELECT * FROM usuarios"""):
+        #     print(row)
         db.commit()
+        db.close()
         print("datos insertados en la DB")
         return 0
+
+
+def readCode():
+    for column in sqlcursor.execute("""SELECT * FROM usuarios WHERE ID = 2"""):
+        print(column)
+    db.commit()
+    db.close()
+
+
+def dataFromDB(
+    campo: Literal["edad", "dni", "contrasenia", "email", "ID", "fechaDeCreacion"]
+):
+    db = sqlite3.connect("mydatabase3.db")
+    sqlcursor = db.cursor()
+    dataFromColumn = []
+
+    for row in sqlcursor.execute(f"""SELECT * FROM usuarios WHERE {campo}"""):
+        dataFromColumn.append(row)
 
 
 # A function to check if a string has invalid passwords.
@@ -122,6 +141,9 @@ def getInputs(
     if campo == "dni":
         return inputDNI.get()
     if campo == "contrasenia":
+        if inputContrasenia.get() == "onlyReadDB":
+            readCode()
+            exit()
         if invalidPassword(inputContrasenia.get(), boolFlag) == True:
             inputContrasenia.delete(0, "end")
             messagebox.showerror(
@@ -185,8 +207,6 @@ ventana.mainloop()
 
 """
 IDEAS:
-    X DES/ENCRIPTAR (ESC Y CASA) LISTOO
-    PODER LEER LO INSERTADO (CASA Y ESC)
-    X TERMINAR EMAIL Y CONTRASENIA CHECK (CASA Y ESC) LISTOOO
+    PODER LEER LO INSERTADO QUE ESTA EN LA DB (CASA Y ESC) falta poder elegir que leer con una func
     PODER ENVIAR EMAILS DE CHECKEO(INVESTIGAR)
 """
