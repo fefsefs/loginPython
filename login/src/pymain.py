@@ -1,10 +1,10 @@
-import math
 import os
 import tkinter
 from tkinter import messagebox
 from typing import *
 import sqlite3
 from datetime import datetime
+import smtplib
 
 # from dotenv import load_dotenv
 
@@ -12,8 +12,9 @@ from datetime import datetime
 # DBUSER = os.getenv('DBUSER')
 # DBPASSWORD = os.getenv('DBPASSWORD')
 
+
 try:
-    db = sqlite3.connect("mydatabase3.db")
+    db = sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db")
     sqlcursor = db.cursor()
     print("conexion a database exitosa")
     print("version de SQLite: " + sqlite3.version)
@@ -26,8 +27,8 @@ try:
     )
     db.commit()
 
-except Exception as ex:
-    print(ex)
+except Exception as exSQL:
+    print(exSQL)
 # fmt: off
 aNum = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 aABC = ('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', 'Z', 'X', 'C', 'V', 'B', 'N', 'M')
@@ -53,6 +54,9 @@ class datosMiembro:
         self.datos["contrasenia"] = iContrasenia
         self.datos["email"] = iEmail
 
+    def __eq__(self, otro) -> bool:
+        return self.datos["contrasenia"] == otro.datos["contrasenia"]
+
     def insertDigestedIntoSQLDB(self):
         sqlcursor.execute(
             f"""
@@ -65,29 +69,37 @@ class datosMiembro:
         db.commit()
         db.close()
         print("datos insertados en la DB")
-        return 0
 
 
-def readCode():
-    for column in sqlcursor.execute("""SELECT * FROM usuarios WHERE ID = 2"""):
+def readReadingCode():
+    for column in sqlcursor.execute("""SELECT * FROM usuarios"""):
         print(column)
     db.commit()
     db.close()
 
 
 def dataFromDB(
-    campo: Literal["edad", "dni", "contrasenia", "email", "ID", "fechaDeCreacion"]
+    campoColumna: Literal[
+        "edad", "dni", "contrasenia", "email", "ID", "fechaDeCreacion"
+    ],
+    campoFila,
 ):
     db = sqlite3.connect("mydatabase3.db")
     sqlcursor = db.cursor()
     dataFromColumn = []
 
-    for row in sqlcursor.execute(f"""SELECT * FROM usuarios WHERE {campo}"""):
+    for row in sqlcursor.execute(f"""SELECT {campoColumna} FROM usuarios"""):
         dataFromColumn.append(row)
 
 
+def confirmationEmailSend(nuevoID):
+    senderEmail = "fcravero@etrr.edu.ar"
+    recieverEmail = 4
+    pass
+
+
 # A function to check if a string has invalid passwords.
-def invalidPassword(rawStringPassword, boolFlag) -> "True/False":
+def invalidPassword(rawStringPassword, boolFlag) -> bool:
     checkPCont = 0
     for x in rawStringPassword:
         if len(rawStringPassword) < 11:
@@ -130,7 +142,8 @@ def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
     print("Email del nuevo ID: " + nuevoID.datos["email"])
 
     nuevoID.insertDigestedIntoSQLDB()
-    return nuevoID
+
+    del nuevoID
 
 
 def getInputs(
@@ -142,7 +155,7 @@ def getInputs(
         return inputDNI.get()
     if campo == "contrasenia":
         if inputContrasenia.get() == "onlyReadDB":
-            readCode()
+            readReadingCode()
             exit()
         if invalidPassword(inputContrasenia.get(), boolFlag) == True:
             inputContrasenia.delete(0, "end")
