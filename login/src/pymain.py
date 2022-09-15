@@ -1,4 +1,5 @@
 import os
+import hashlib
 import tkinter
 from tkinter import messagebox
 from typing import *
@@ -61,17 +62,13 @@ class datosMiembro:
         sqlcursor.execute(
             f"""
             INSERT INTO usuarios (edad, dni, contrasenia, email, fechaDeCreacion)
-        VALUES ({hash(self.datos['edad'])}, {hash(self.datos['DNI'])}, {hash(self.datos['contrasenia'])}, {hash(self.datos['email'])}, '{datetime.now()}')
+        VALUES ('{hashlib.sha1(bytes(self.datos['edad'], encoding='utf-8'))}', '{hashlib.sha1(bytes(self.datos['DNI'], encoding='utf-8'))}', '{hashlib.sha1(bytes(self.datos['contrasenia'], encoding='utf-8'))}', '{hashlib.sha1(bytes(self.datos['email'], encoding='utf-8'))}', '{datetime.now()}')
         """
         )
-        # for row in sqlcursor.execute("""SELECT * FROM usuarios"""):
-        #     print(row)
-        db.commit()
-        db.close()
         print("datos insertados en la DB")
 
 
-def readReadingCode():
+def readAllTheTable():
     for column in sqlcursor.execute("""SELECT * FROM usuarios"""):
         print(column)
     db.commit()
@@ -81,15 +78,10 @@ def readReadingCode():
 def dataFromDB(
     campoColumna: Literal[
         "edad", "dni", "contrasenia", "email", "ID", "fechaDeCreacion"
-    ],
-    campoFila,
+    ]
 ):
-    db = sqlite3.connect("mydatabase3.db")
-    sqlcursor = db.cursor()
-    dataFromColumn = []
-
-    for row in sqlcursor.execute(f"""SELECT {campoColumna} FROM usuarios"""):
-        dataFromColumn.append(row)
+    for columna in sqlcursor.execute(f"""SELECT {campoColumna} FROM usuarios"""):
+        yield columna
 
 
 def confirmationEmailSend(nuevoID):
@@ -142,7 +134,16 @@ def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
     print("Email del nuevo ID: " + nuevoID.datos["email"])
 
     nuevoID.insertDigestedIntoSQLDB()
+    listWithPassW = list(dataFromDB(campoColumna="contrasenia"))
+    for x in listWithPassW:
+        digestedPass = hashlib.sha1(
+            bytes(nuevoID.datos["contrasenia"], encoding="utf-8")
+        )
+        if x == digestedPass:
+            print("contrasenia conicide")
 
+    db.commit()
+    db.close()
     del nuevoID
 
 
@@ -155,7 +156,7 @@ def getInputs(
         return inputDNI.get()
     if campo == "contrasenia":
         if inputContrasenia.get() == "onlyReadDB":
-            readReadingCode()
+            readAllTheTable()
             exit()
         if invalidPassword(inputContrasenia.get(), boolFlag) == True:
             inputContrasenia.delete(0, "end")
