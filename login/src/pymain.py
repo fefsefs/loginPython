@@ -1,5 +1,8 @@
+from email import message
+import os
 from os.path import exists
-import hashlib
+from shutil import ExecError
+from time import pthread_getcpuclockid
 from cryptography.fernet import Fernet
 import tkinter
 from tkinter import messagebox
@@ -7,12 +10,10 @@ from typing import *
 import sqlite3
 from datetime import datetime
 import smtplib
+from dotenv import load_dotenv
 
-# from dotenv import load_dotenv
-
-# load_dotenv()
-# DBUSER = os.getenv('DBUSER')
-# DBPASSWORD = os.getenv('DBPASSWORD')
+load_dotenv()
+EMAILPASS = os.getenv("EMAILPASS")
 
 
 def DBEncryptionKeyGenerator():
@@ -29,28 +30,26 @@ def DBEncryptionKeyReader() -> bytes:
     return key
 
 
-def DBEncryptedFileCreator(fernetObject: Fernet):
+def DBEncryptor(fernetObject: Fernet):
     with open("PhytonProyecto\\login\\src\\mydatabase3.db", "rb") as originalDB:
         original = originalDB.read()
 
     encrypted = fernetObject.encrypt(original)
 
-    with open(
-        "PhytonProyecto\\login\\src\\encryptedMydatabase3.db", "wb"
-    ) as encryptedDB:
+    with open("PhytonProyecto\\login\\src\\mydatabase3.db", "wb") as encryptedDB:
         encryptedDB.write(encrypted)
 
 
-def DBEncryptedFileDecryption(fernetObject: Fernet):
+def DBDecryptor(fernetObject: Fernet):
     with open(
-        "PhytonProyecto\\login\\src\\encryptedMydatabase3.db", "rb"
+        "PhytonProyecto\\login\\src\\mydatabase3.db", "rb"
     ) as deEncryptionFuncEncryptedDB:
         encrypted = deEncryptionFuncEncryptedDB.read()
 
-    decrypted = f.decrypt(encrypted)
+    decrypted = fernetObject.decrypt(encrypted)
 
     with open(
-        "PhytonProyecto\\login\\src\\decryptedMydatabase3.db", "wb"
+        "PhytonProyecto\\login\\src\\mydatabase3.db", "wb"
     ) as deEncryptionFuncDecryptedDB:
         deEncryptionFuncDecryptedDB.write(decrypted)
 
@@ -58,8 +57,7 @@ def DBEncryptedFileDecryption(fernetObject: Fernet):
 try:
     DBEncryptionKeyGenerator()
     f = Fernet(DBEncryptionKeyReader())
-    DBEncryptedFileCreator(f)
-    DBEncryptedFileDecryption(f)
+
     db = sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db")
     sqlcursor = db.cursor()
     print("conexion a database exitosa")
@@ -91,6 +89,7 @@ ventana.geometry("600x400")
 ventana.title("Felipe Cravero")
 
 
+# Devuelve el datos miembro en usuarios
 class datosMiembro:
     def __init__(self, iEdad: int, iDNI: int, iContrasenia: str, iEmail: str):
         """constructor"""
@@ -104,35 +103,58 @@ class datosMiembro:
         return self.datos["contrasenia"] == otro.datos["contrasenia"]
 
     def insertDigestedIntoSQLDB(self):
+        DBDecryptor()
+
         sqlcursor.execute(
             f"""
             INSERT INTO usuarios (edad, dni, contrasenia, email, fechaDeCreacion)
-        VALUES ('{hashlib.sha1(bytes(self.datos['edad'], encoding='utf-8'))}', '{hashlib.sha1(bytes(self.datos['DNI'], encoding='utf-8'))}', '{hashlib.sha1(bytes(self.datos['contrasenia'], encoding='utf-8'))}', '{hashlib.sha1(bytes(self.datos['email'], encoding='utf-8'))}', '{datetime.now()}')
+        VALUES ('{self.datos['edad']}', '{self.datos['DNI']}', '{self.datos['contrasenia']}', '{self.datos['email']}', '{datetime.now()}')
         """
         )
         print("datos insertados en la DB")
 
+        DBEncryptor()
 
+
+# Read all the tables.
 def readAllTheTable():
+    DBDecryptor()
+
     for column in sqlcursor.execute("""SELECT * FROM usuarios"""):
         print(column)
     db.commit()
     db.close()
 
+    DBEncryptor()
 
-def dataFromDB(
+
+# Returns a generator that yields all the data from the database.
+def retrieveDataFromDB(
     campoColumna: Literal[
         "edad", "dni", "contrasenia", "email", "ID", "fechaDeCreacion"
     ]
 ):
+    DBDecryptor()
+
     for columna in sqlcursor.execute(f"""SELECT {campoColumna} FROM usuarios"""):
         yield columna
+
+    DBEncryptor()
 
 
 def confirmationEmailSend(nuevoID):
     senderEmail = "fcravero@etrr.edu.ar"
-    recieverEmail = 4
-    pass
+    recieverEmail = nuevoID.datos["email"]
+    message = "hola, confirme su correo electronico"
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(senderEmail, EMAILPASS)
+        print("Conexion al server completa")
+        server.sendmail()
+    except Exception as exEmail:
+        print(exEmail)
 
 
 # A function to check if a string has invalid passwords.
@@ -179,16 +201,6 @@ def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
     print("Email del nuevo ID: " + nuevoID.datos["email"])
 
     nuevoID.insertDigestedIntoSQLDB()
-    try:
-        listWithPassW = list(dataFromDB(campoColumna="contrasenia"))
-        for x in listWithPassW:
-            digestedPass = hashlib.sha1(
-                bytes(nuevoID.datos["contrasenia"], encoding="utf-8")
-            )
-            if x == digestedPass:
-                print("contrasenia conicide")
-    except Exception as ex:
-        print(ex)
 
     db.commit()
     db.close()
