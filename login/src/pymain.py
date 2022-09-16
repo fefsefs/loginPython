@@ -1,5 +1,6 @@
-import os
+from os.path import exists
 import hashlib
+from cryptography.fernet import Fernet
 import tkinter
 from tkinter import messagebox
 from typing import *
@@ -14,7 +15,51 @@ import smtplib
 # DBPASSWORD = os.getenv('DBPASSWORD')
 
 
+def DBEncryptionKeyGenerator():
+    if not exists("PhytonProyecto\\login\\src\\keyFile.key"):
+        key = Fernet.generate_key()
+        with open("PhytonProyecto\\login\\src\\keyFile.key", "wb") as keyFile:
+            keyFile.write(key)
+
+
+def DBEncryptionKeyReader() -> bytes:
+    with open("PhytonProyecto\\login\\src\\keyFile.key", "rb") as keyFile:
+        key = keyFile.read()
+        print(key)
+    return key
+
+
+def DBEncryptedFileCreator(fernetObject: Fernet):
+    with open("PhytonProyecto\\login\\src\\mydatabase3.db", "rb") as originalDB:
+        original = originalDB.read()
+
+    encrypted = fernetObject.encrypt(original)
+
+    with open(
+        "PhytonProyecto\\login\\src\\encryptedMydatabase3.db", "wb"
+    ) as encryptedDB:
+        encryptedDB.write(encrypted)
+
+
+def DBEncryptedFileDecryption(fernetObject: Fernet):
+    with open(
+        "PhytonProyecto\\login\\src\\encryptedMydatabase3.db", "rb"
+    ) as deEncryptionFuncEncryptedDB:
+        encrypted = deEncryptionFuncEncryptedDB.read()
+
+    decrypted = f.decrypt(encrypted)
+
+    with open(
+        "PhytonProyecto\\login\\src\\decryptedMydatabase3.db", "wb"
+    ) as deEncryptionFuncDecryptedDB:
+        deEncryptionFuncDecryptedDB.write(decrypted)
+
+
 try:
+    DBEncryptionKeyGenerator()
+    f = Fernet(DBEncryptionKeyReader())
+    DBEncryptedFileCreator(f)
+    DBEncryptedFileDecryption(f)
     db = sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db")
     sqlcursor = db.cursor()
     print("conexion a database exitosa")
@@ -134,13 +179,16 @@ def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
     print("Email del nuevo ID: " + nuevoID.datos["email"])
 
     nuevoID.insertDigestedIntoSQLDB()
-    listWithPassW = list(dataFromDB(campoColumna="contrasenia"))
-    for x in listWithPassW:
-        digestedPass = hashlib.sha1(
-            bytes(nuevoID.datos["contrasenia"], encoding="utf-8")
-        )
-        if x == digestedPass:
-            print("contrasenia conicide")
+    try:
+        listWithPassW = list(dataFromDB(campoColumna="contrasenia"))
+        for x in listWithPassW:
+            digestedPass = hashlib.sha1(
+                bytes(nuevoID.datos["contrasenia"], encoding="utf-8")
+            )
+            if x == digestedPass:
+                print("contrasenia conicide")
+    except Exception as ex:
+        print(ex)
 
     db.commit()
     db.close()
