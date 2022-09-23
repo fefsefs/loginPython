@@ -1,79 +1,122 @@
-from email import message
 import os
+import time
 from os.path import exists
-from shutil import ExecError
-from time import pthread_getcpuclockid
 from cryptography.fernet import Fernet
-import tkinter
+from tkinter import *
+from tkinter.ttk import *
+import customtkinter
 from tkinter import messagebox
-from typing import *
+from typing import Literal
 import sqlite3
 from datetime import datetime
+import ssl
 import smtplib
+from email.message import EmailMessage
 from dotenv import load_dotenv
 
 load_dotenv()
 EMAILPASS = os.getenv("EMAILPASS")
+GMAILKEY = os.getenv("GMAILKEY")
 
 
+sepConsole = """**************************************************"""
+# DEFINO DECORADORES
+
+
+def timer(func):
+    def wrapper(*args, **kwargs):
+        before = time.perf_counter()
+        func(*args, **kwargs)
+        print(f"Func tardo: {time.time() - before} seconds")
+
+    return wrapper
+
+
+def encriptDec(func):
+    def wrapper(*args, **kwargs):
+        if func(*args, **kwargs) == "cryptography.fernet.InvalidToken":
+            print("key invalida, rehacer")
+
+    return wrapper
+
+
+@encriptDec
 def DBEncryptionKeyGenerator():
-    if not exists("PhytonProyecto\\login\\src\\keyFile.key"):
-        key = Fernet.generate_key()
-        with open("PhytonProyecto\\login\\src\\keyFile.key", "wb") as keyFile:
-            keyFile.write(key)
+    try:
+        if not exists("PhytonProyecto\\login\\src\\keyFile.key"):
+            key = Fernet.generate_key()
+            print(key)
+            with open("PhytonProyecto\\login\\src\\keyFile.key", "wb") as keyFile:
+                keyFile.write(key)
+    except Exception as decExc:
+        return decExc
 
 
 def DBEncryptionKeyReader() -> bytes:
     with open("PhytonProyecto\\login\\src\\keyFile.key", "rb") as keyFile:
-        key = keyFile.read()
-        print(key)
-    return key
+        keyR = keyFile.read()
+        print(keyR)
+    return keyR
 
 
+@encriptDec
 def DBEncryptor(fernetObject: Fernet):
-    with open("PhytonProyecto\\login\\src\\mydatabase3.db", "rb") as originalDB:
-        original = originalDB.read()
+    try:
+        with open("PhytonProyecto\\login\\src\\mydatabase3.db", "rb") as originalDB:
+            original = originalDB.read()
 
-    encrypted = fernetObject.encrypt(original)
+        encrypted = fernetObject.encrypt(original)
 
-    with open("PhytonProyecto\\login\\src\\mydatabase3.db", "wb") as encryptedDB:
-        encryptedDB.write(encrypted)
+        with open("PhytonProyecto\\login\\src\\mydatabase3.db", "wb") as encryptedDB:
+            encryptedDB.write(encrypted)
+    except Exception as decExc:
+        return decExc
 
 
+@encriptDec
 def DBDecryptor(fernetObject: Fernet):
-    with open(
-        "PhytonProyecto\\login\\src\\mydatabase3.db", "rb"
-    ) as deEncryptionFuncEncryptedDB:
-        encrypted = deEncryptionFuncEncryptedDB.read()
+    try:
+        with open(
+            "PhytonProyecto\\login\\src\\mydatabase3.db", "rb"
+        ) as deEncryptionFuncEncryptedDB:
+            encrypted = deEncryptionFuncEncryptedDB.read()
 
-    decrypted = fernetObject.decrypt(encrypted)
+        decrypted = fernetObject.decrypt(encrypted)
 
-    with open(
-        "PhytonProyecto\\login\\src\\mydatabase3.db", "wb"
-    ) as deEncryptionFuncDecryptedDB:
-        deEncryptionFuncDecryptedDB.write(decrypted)
+        with open(
+            "PhytonProyecto\\login\\src\\mydatabase3.db", "wb"
+        ) as deEncryptionFuncDecryptedDB:
+            deEncryptionFuncDecryptedDB.write(decrypted)
+    except Exception as decExc:
+        return decExc
 
+
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?| PRIMERAS LINEAS QUE SE VAN A EJECUTAR  ?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|s?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
 
 try:
     DBEncryptionKeyGenerator()
     f = Fernet(DBEncryptionKeyReader())
-
-    db = sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db")
-    sqlcursor = db.cursor()
-    print("conexion a database exitosa")
-    print("version de SQLite: " + sqlite3.version)
-
-    sqlcursor.execute(
-        """ 
-        CREATE TABLE IF NOT EXISTS usuarios 
-            (ID INTEGER PRIMARY KEY AUTOINCREMENT, edad int, dni int, contrasenia varchar(255), email varchar(255) NOT NULL, fechaDeCreacion DATETIME)
-    """
-    )
-    db.commit()
-
+    with sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db") as db:
+        sqlcursor = db.cursor()
+        print("conexion a database exitosa")
+        print(f"version de SQLite: {sqlite3.version}")
+        print(f"{sepConsole}\n\n")
+        sqlcursor.execute(
+            """ 
+            CREATE TABLE IF NOT EXISTS usuarios 
+                (ID INTEGER PRIMARY KEY AUTOINCREMENT, edad int, dni int, contrasenia varchar(255), email varchar(255) NOT NULL, fechaDeCreacion DATETIME)
+        """
+        )
+        db.commit()
 except Exception as exSQL:
     print(exSQL)
+
 # fmt: off
+
 aNum = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 aABC = ('Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', 'Z', 'X', 'C', 'V', 'B', 'N', 'M')
 aAbc = ('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ñ', 'z', 'x', 'c', 'v', 'b', 'n', 'm')
@@ -83,10 +126,6 @@ aChar = ('~', '@', '_', '/', '+', '.')
 boolFlag = False
 boolFlagInput = False
 nuevoID = 0
-
-ventana = tkinter.Tk()
-ventana.geometry("600x400")
-ventana.title("Felipe Cravero")
 
 
 # Devuelve el datos miembro en usuarios
@@ -102,30 +141,32 @@ class datosMiembro:
     def __eq__(self, otro) -> bool:
         return self.datos["contrasenia"] == otro.datos["contrasenia"]
 
-    def insertDigestedIntoSQLDB(self):
-        DBDecryptor()
+    def insertDigestedIntoSQLDB(self, f):
+        DBDecryptor(f)
 
-        sqlcursor.execute(
-            f"""
-            INSERT INTO usuarios (edad, dni, contrasenia, email, fechaDeCreacion)
-        VALUES ('{self.datos['edad']}', '{self.datos['DNI']}', '{self.datos['contrasenia']}', '{self.datos['email']}', '{datetime.now()}')
-        """
-        )
-        print("datos insertados en la DB")
+        with sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db") as db:
+            sqlcursor = db.cursor()
+            sqlcursor.execute(
+                f"""
+                    INSERT INTO usuarios (edad, dni, contrasenia, email, fechaDeCreacion)
+                VALUES ('{self.datos['edad']}', '{self.datos['DNI']}', '{self.datos['contrasenia']}', '{self.datos['email']}', '{datetime.now()}')
+                """
+            )
+            print("datos insertados en la DB")
 
-        DBEncryptor()
+        DBEncryptor(f)
 
 
-# Read all the tables.
+# Read all the table.
 def readAllTheTable():
-    DBDecryptor()
+    DBDecryptor(f)
 
-    for column in sqlcursor.execute("""SELECT * FROM usuarios"""):
-        print(column)
-    db.commit()
-    db.close()
+    with sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db") as db:
+        sqlcursor = db.cursor()
+        for column in sqlcursor.execute("""SELECT * FROM usuarios"""):
+            print(column)
 
-    DBEncryptor()
+    DBEncryptor(f)
 
 
 # Returns a generator that yields all the data from the database.
@@ -134,25 +175,35 @@ def retrieveDataFromDB(
         "edad", "dni", "contrasenia", "email", "ID", "fechaDeCreacion"
     ]
 ):
-    DBDecryptor()
+    DBDecryptor(f)
 
-    for columna in sqlcursor.execute(f"""SELECT {campoColumna} FROM usuarios"""):
-        yield columna
+    with sqlite3.connect("PhytonProyecto\\login\\src\\mydatabase3.db") as db:
+        sqlcursor = db.cursor()
+        for columna in sqlcursor.execute(f"""SELECT {campoColumna} FROM usuarios"""):
+            yield columna
 
-    DBEncryptor()
+    DBEncryptor(f)
 
 
 def confirmationEmailSend(nuevoID):
+
     senderEmail = "fcravero@etrr.edu.ar"
     recieverEmail = nuevoID.datos["email"]
+    subject = "Email de confirmacion"
     message = "hola, confirme su correo electronico"
 
+    em = EmailMessage()
+    em["From"] = senderEmail
+    em["To"] = recieverEmail
+    em["Subject"] = subject
+    em.set_content(message)
+
+    context = ssl.create_default_context()
+
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(senderEmail, EMAILPASS)
-        print("Conexion al server completa")
-        server.sendmail()
+        with smtplib.SMPT_SSL("smpt.gmail.com", 465, context=context) as smtp:
+            smtp.login(senderEmail, GMAILKEY)
+            smtp.sendmail(senderEmail, recieverEmail, em.as_string())
     except Exception as exEmail:
         print(exEmail)
 
@@ -169,10 +220,9 @@ def invalidPassword(rawStringPassword, boolFlag) -> bool:
     if checkPCont != 0 or boolFlag == True:
         rawStringPassword = " "
         print(
-            f"se ha insertado un caracter invalido o la cantidad de caracteres son menores a 11 {rawStringPassword}"
+            f"se ha insertado un caracter invalido o la cantidad de caracteres son menores a 11 en la contrasenia {rawStringPassword}"
         )
         return True
-    print("cotrasenia correcta")
     return False
 
 
@@ -193,17 +243,18 @@ def invalidEmail(rawStringEmail) -> "True/False":
     return False
 
 
+@timer
 def button1Command(nuevoID, boolFlagInput) -> "nuevoID":
     nuevoID = getInputs(nuevoID, boolFlagInput, campo="ID")
-    print("Edad del nuevo ID: " + nuevoID.datos["edad"])
-    print("DNI del nuevo ID: " + nuevoID.datos["DNI"])
-    print("Contrasenia del nuevo ID: " + nuevoID.datos["contrasenia"])
-    print("Email del nuevo ID: " + nuevoID.datos["email"])
+    try:
+        print("Edad del nuevo ID: " + nuevoID.datos["edad"])
+        print("DNI del nuevo ID: " + nuevoID.datos["DNI"])
+        print("Contrasenia del nuevo ID: " + nuevoID.datos["contrasenia"])
+        print("Email del nuevo ID: " + nuevoID.datos["email"])
+    except Exception as decExc:
+        print(str(decExc))
+    nuevoID.insertDigestedIntoSQLDB(f)
 
-    nuevoID.insertDigestedIntoSQLDB()
-
-    db.commit()
-    db.close()
     del nuevoID
 
 
@@ -242,45 +293,64 @@ def getInputs(
         return nuevoID
 
 
-titulo = tkinter.Label(ventana, text="Iniciar sesion", font="Sylfaen 25")
-titulo.grid(row=0, column=0)
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?| PARTE DE TKINTER  ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|
+# ?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|s?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?|?
 
-inputEdadTitulo = tkinter.Label(ventana, text="ingresar edad", font="Sylfaen 14")
-inputEdadTitulo.grid(row=1, column=1)
-inputEdad = tkinter.Entry(ventana, font="Sylfaen 14")
-inputEdad.grid(row=2, column=1)
+ventana = customtkinter.CTk()
+ventana.geometry("400x580")
+ventana.resizable(width=False, height=False)
+ventana.title("Felipe Cravero")
 
-inputDNITitulo = tkinter.Label(ventana, text="ingresar DNI", font="Sylfaen 14")
-inputDNITitulo.grid(row=3, column=1)
-inputDNI = tkinter.Entry(ventana, font="Sylfaen 14")
-inputDNI.grid(row=4, column=1)
+customtkinter.set_appearance_mode("dark")
+customtkinter.set_default_color_theme("green")
 
-inputContraseniaTitulo = tkinter.Label(
-    ventana, text="ingresar contrasenia", font="Sylfaen 14"
+titulo = customtkinter.CTkLabel(ventana, text="Iniciar sesion", text_font="Sylfaen 25")
+titulo.pack(pady=12, padx=10)
+
+inputEdadTitulo = customtkinter.CTkLabel(
+    ventana, text="ingresar edad", text_font="Sylfaen 14"
 )
-inputContraseniaTitulo.grid(row=5, column=1)
-inputContrasenia = tkinter.Entry(ventana, font="Sylfaen 14")
-inputContrasenia.grid(row=6, column=1)
+inputEdadTitulo.pack(pady=12, padx=10)
+inputEdad = customtkinter.CTkEntry(ventana, text_font="Sylfaen 14")
+inputEdad.pack(pady=12, padx=10)
 
-inputEmailTitulo = tkinter.Label(ventana, text="ingresar email", font="Sylfaen 14")
-inputEmailTitulo.grid(row=7, column=1)
-inputEmail = tkinter.Entry(ventana, font="Sylfaen 14")
-inputEmail.grid(row=8, column=1)
+inputDNITitulo = customtkinter.CTkLabel(
+    ventana, text="ingresar DNI", text_font="Sylfaen 14"
+)
+inputDNITitulo.pack(pady=12, padx=10)
+inputDNI = customtkinter.CTkEntry(ventana, text_font="Sylfaen 14")
+inputDNI.pack(pady=12, padx=10)
 
-sendInput = tkinter.Button(
+inputContraseniaTitulo = customtkinter.CTkLabel(
+    ventana, text="ingresar contrasenia", text_font="Sylfaen 14"
+)
+inputContraseniaTitulo.pack(pady=12, padx=10)
+inputContrasenia = customtkinter.CTkEntry(ventana, text_font="Sylfaen 14")
+inputContrasenia.pack(pady=12, padx=10)
+
+inputEmailTitulo = customtkinter.CTkLabel(
+    ventana, text="ingresar email", text_font="Sylfaen 14"
+)
+inputEmailTitulo.pack(pady=12, padx=10)
+inputEmail = customtkinter.CTkEntry(ventana, text_font="Sylfaen 14")
+inputEmail.pack(pady=12, padx=10)
+
+sendInput = customtkinter.CTkButton(
     ventana,
     text="enviar",
     width=6,
     height=2,
     command=lambda: button1Command(nuevoID, boolFlagInput),
 )
-sendInput.grid(row=9, column=1)
-
+sendInput.pack(pady=12, padx=10)
 
 ventana.mainloop()
 
+
 """
 IDEAS:
-    PODER LEER LO INSERTADO QUE ESTA EN LA DB (CASA Y ESC) falta poder elegir que leer con una func
     PODER ENVIAR EMAILS DE CHECKEO(INVESTIGAR)
 """
